@@ -133,7 +133,7 @@
             card.className = 'day-card';
             const isOpen = idx === 0;
             // ★ type="text" に戻し、inputmode="decimal" で数字キーボードを誘発
-            let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" inputmode="decimal"></td></tr>`).join('');
+            let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)"></td></tr>`).join('');
             card.innerHTML = `<div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')"><span class="day-title">${log.date} の記録</span><span style="font-size:0.8rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span></div><div class="day-content ${isOpen ? 'active' : ''}"><table class="item-table">${rows}</table><div class="card-footer"><button id="btn-del-pre-${log.id}" class="btn-small" style="background:#ddd; color:#888;" onclick="showDelConfirm(${log.id})">削除</button><div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;"><span style="font-size:0.7rem; color:red;">OK?</span><button class="btn-small" style="background:var(--accent-orange);" onclick="deleteDay(${log.id})">はい</button><button class="btn-small" style="background:#ccc;" onclick="hideDelConfirm(${log.id})">中止</button></div></div></div>`;
             list.appendChild(card);
         });
