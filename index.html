@@ -270,11 +270,18 @@ function executeAddMaster() {
             card.className = 'day-card';
             const isOpen = idx === 0;
             let rows = log.items.map((item, i) => `
-                <tr class="item-row">
-                    <td class="item-name">${item.name}</td>
-                    <td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)"></td>
-                </tr>
-            `).join('');
+    <tr class="item-row">
+        <td class="item-name">${item.name}</td>
+        <td class="item-input-cell">
+            <input type="tel" 
+                   class="item-input" 
+                   value="${item.value}" 
+                   onchange="updateVal(${log.id}, ${i}, this.value)" 
+                   placeholder="0" 
+                   inputmode="decimal">
+        </td>
+    </tr>
+`).join('');
 
             card.innerHTML = `
                 <div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')">
