@@ -47,13 +47,44 @@
         .order-btns { display: flex; gap: 4px; }
         .btn-order { background: #f0f0f0; color: #333; padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; }
         
-        /* オリジナル追加モーダル */
-        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
-        .modal { background: white; width: 85%; max-width: 350px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: pop 0.3s ease-out; }
-        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal h3 { margin-top: 0; font-size: 1.1rem; color: var(--main-blue); border-bottom: 2px solid #eee; padding-bottom: 8px; }
-        .modal input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; margin: 15px 0; }
-        .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+      /* オリジナル追加モーダル（位置を上寄りに変更） */
+#modalOverlay { 
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0,0,0,0.5); 
+    z-index: 100; 
+    justify-content: center; 
+    align-items: flex-start; /* 中央ではなく上揃えにする */
+    padding-top: 50px; /* 上から少し隙間をあける */
+}
+.modal { 
+    background: white; 
+    width: 90%; 
+    max-width: 350px; 
+    padding: 20px; 
+    border-radius: 12px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
+    animation: slideDown 0.3s ease-out; 
+}
+@keyframes slideDown { 
+    from { transform: translateY(-20px); opacity: 0; } 
+    to { transform: translateY(0); opacity: 1; } 
+}
+.modal input { 
+    width: 100%; 
+    padding: 15px; /* 少し大きくしてタップしやすく */
+    border: 2px solid #ddd; 
+    border-radius: 8px; 
+    font-size: 1.1rem; /* 文字を大きくしてズーム防止 */
+    box-sizing: border-box; 
+    margin: 15px 0; 
+    outline: none;
+}
+.modal input:focus { border-color: var(--main-blue); }
     </style>
 </head>
 <body>
