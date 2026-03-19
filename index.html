@@ -45,7 +45,6 @@
         .item-row { border-bottom: 1px solid #f9f9f9; }
         .item-name { width: 40%; padding: 6px 10px; font-size: 0.85rem; color: #666; background: #fafafa; }
         .item-input-cell { width: 60%; padding: 4px 8px; }
-        /* 日々の入力欄：数字優先設定 */
         .item-input { width: 100%; padding: 8px; border: 1.5px solid #eee; border-radius: 8px; font-size: 1.1rem; outline: none; box-sizing: border-box; background: #fff; color: #000; -webkit-appearance: none; }
         .item-input:focus { border-color: var(--main-blue); background: #fdfdf0; }
 
@@ -67,7 +66,6 @@
         .modal { background: white; width: 85%; max-width: 320px; padding: 15px; border-radius: 15px; animation: slideDown 0.2s ease-out; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal h3 { margin: 0 0 10px; font-size: 1rem; color: var(--main-blue); }
-        /* マスター項目の追加入力欄：文字優先設定 */
         .modal input { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; outline: none; }
     </style>
 </head>
@@ -96,7 +94,16 @@
     </div>
 </div>
 
-<div id="modalOverlay"><div class="modal"><h3>項目を追加</h3><input type="text" id="newMasterItemName" placeholder="項目名..."><div style="display:flex; gap:8px; justify-content:flex-end;"><button class="btn-small" style="background:#ccc;" onclick="closeModal()">中止</button><button class="btn-small" style="background:var(--main-blue);" onclick="executeAddMaster()">追加</button></div></div></div>
+<div id="modalOverlay">
+    <div class="modal">
+        <h3>項目を追加</h3>
+        <input type="text" id="newMasterItemName" placeholder="項目名..." inputmode="text">
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button class="btn-small" style="background:#ccc;" onclick="closeModal()">中止</button>
+            <button class="btn-small" style="background:var(--main-blue);" onclick="executeAddMaster()">追加</button>
+        </div>
+    </div>
+</div>
 
 <script>
     let store = JSON.parse(localStorage.getItem('daily_memo_v8')) || { master_items: ["生産数", "ロス数", "清掃点検"], logs: [] };
@@ -140,8 +147,15 @@
             const card = document.createElement('div');
             card.className = 'day-card';
             const isOpen = idx === 0;
-            // メモ入力欄：inputmode="decimal" で数字優先
-            let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value}" inputmode="decimal"></td></tr>`).join('');
+            // ★日々のメモ入力欄：数字優先（inputmode="decimal"）
+            let rows = log.items.map((item, i) => `
+                <tr class="item-row">
+                    <td class="item-name">${item.name}</td>
+                    <td class="item-input-cell">
+                        <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" inputmode="decimal">
+                    </td>
+                </tr>
+            `).join('');
             card.innerHTML = `<div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')"><span class="day-title">${log.date} の記録</span><span style="font-size:0.8rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span></div><div class="day-content ${isOpen ? 'active' : ''}"><table class="item-table">${rows}</table><div class="card-footer"><button id="btn-del-pre-${log.id}" class="btn-small" style="background:#ddd; color:#888;" onclick="showDelConfirm(${log.id})">削除</button><div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;"><span style="font-size:0.7rem; color:red;">OK?</span><button class="btn-small" style="background:var(--accent-orange);" onclick="deleteDay(${log.id})">はい</button><button class="btn-small" style="background:#ccc;" onclick="hideDelConfirm(${log.id})">中止</button></div></div></div>`;
             list.appendChild(card);
         });
