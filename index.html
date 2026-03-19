@@ -21,12 +21,12 @@
             font-family: sans-serif;
             background-color: var(--bg-color); 
             margin: 0; 
-            padding: calc(env(safe-area-inset-top) + 5px) 8px 20px; 
+            padding: calc(env(safe-area-inset-top) + 5px) 8px 40px; /* 下の余白を少し広めに */
             color: var(--text-color);
             font-size: 14px; 
         }
 
-        .container { max-width: 500px; margin: 0 auto; }
+        .container { max-width: 500px; margin: 0 auto; min-height: 90vh; }
         
         button { cursor: pointer; border: none; border-radius: 12px; font-weight: bold; transition: 0.2s; }
 
@@ -45,7 +45,7 @@
         .item-row { border-bottom: 1px solid #f9f9f9; }
         .item-name { width: 40%; padding: 6px 10px; font-size: 0.85rem; color: #666; background: #fafafa; }
         .item-input-cell { width: 60%; padding: 4px 8px; }
-        /* 入力欄の微調整 */
+        /* 文字も打てるように標準設定に戻しました */
         .item-input { width: 100%; padding: 8px; border: 1.5px solid #eee; border-radius: 8px; font-size: 1.1rem; outline: none; box-sizing: border-box; background: #fff; color: #000; -webkit-appearance: none; }
         .item-input:focus { border-color: var(--main-blue); background: #fdfdf0; }
 
@@ -60,6 +60,9 @@
         .master-row { display: flex; align-items: center; background: #fff; border: 1px solid #eee; margin-bottom: 4px; padding: 4px 8px; border-radius: 8px; }
         .master-name-text { flex-grow: 1; font-weight: bold; padding-left: 8px; font-size: 0.85rem; }
         .btn-order { background: #f0f0f0; color: #333; padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; margin: 0 1px; }
+
+        /* クレジット表示（下部） */
+        .app-footer { margin-top: 30px; text-align: center; color: #999; font-size: 0.7rem; padding-bottom: 20px; }
 
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 40px; }
         .modal { background: white; width: 85%; max-width: 320px; padding: 15px; border-radius: 15px; animation: slideDown 0.2s ease-out; }
@@ -85,6 +88,11 @@
             <div id="masterConfirmArea"></div>
             <button onclick="openModal()" style="background:var(--success-green); color:white; width:100%; padding:10px; margin-top:8px;">＋ 項目を追加</button>
         </div>
+    </div>
+
+    <div class="app-footer">
+        <div>制作者：1F加工西</div>
+        <div>Version 1.2</div>
     </div>
 </div>
 
@@ -132,7 +140,7 @@
             const card = document.createElement('div');
             card.className = 'day-card';
             const isOpen = idx === 0;
-            // ★ type="text" に戻し、inputmode="decimal" で数字キーボードを誘発
+            // ★ 文字入力を確実にするため input type="text" のみ。
             let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)"></td></tr>`).join('');
             card.innerHTML = `<div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')"><span class="day-title">${log.date} の記録</span><span style="font-size:0.8rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span></div><div class="day-content ${isOpen ? 'active' : ''}"><table class="item-table">${rows}</table><div class="card-footer"><button id="btn-del-pre-${log.id}" class="btn-small" style="background:#ddd; color:#888;" onclick="showDelConfirm(${log.id})">削除</button><div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;"><span style="font-size:0.7rem; color:red;">OK?</span><button class="btn-small" style="background:var(--accent-orange);" onclick="deleteDay(${log.id})">はい</button><button class="btn-small" style="background:#ccc;" onclick="hideDelConfirm(${log.id})">中止</button></div></div></div>`;
             list.appendChild(card);
