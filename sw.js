@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-memo-v9'; // 更新時はここをv10, v11と変える
+const CACHE_NAME = 'daily-memo-v9.1'; // 更新時はここをv10, v11と変える
 const assets = [
   './',
   './index.html',
