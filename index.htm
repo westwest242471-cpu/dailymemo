@@ -1,74 +1,124 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Memo PWA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Daily Item Memo Pro</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
     <style>
-        /* レイアウトは前回と同じ（省略せずに全て含めてください） */
         :root { --main-blue: #0056b3; --danger: #e74c3c; --success: #27ae60; --gray: #95a5a6; }
-        body { font-family: sans-serif; background-color: #f0f0f0; margin: 0; padding: 5px; font-size: 14px; }
-        .container { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        button { cursor: pointer; border: none; border-radius: 3px; font-weight: bold; }
-        .add-btn { background-color: var(--main-blue); color: white; width: 100%; padding: 10px; font-size: 1rem; margin-bottom: 8px; }
-        .day-card { border: 1px solid #ddd; margin-bottom: 4px; border-radius: 3px; }
-        .day-header { background: #f8f9fa; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #eee; }
-        .day-title { font-size: 0.9rem; color: #333; }
-        .day-content { padding: 0; display: none; }
+        body { font-family: sans-serif; background-color: #f0f0f0; margin: 0; padding: env(safe-area-inset-top) 5px 20px; font-size: 14px; }
+        .container { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
+        
+        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
+        
+        /* インストール案内ボタン（ブラウザ時のみ表示） */
+        #installBanner { display: none; background: #333; color: white; padding: 12px; margin-bottom: 10px; border-radius: 8px; justify-content: space-between; align-items: center; }
+        .install-btn { background: var(--success); color: white; padding: 6px 15px; font-size: 0.85rem; }
+
+        .add-btn { background-color: var(--main-blue); color: white; width: 100%; padding: 12px; font-size: 1rem; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .add-btn:active { transform: scale(0.98); }
+
+        /* メモカード */
+        .day-card { border: 1px solid #ddd; margin-bottom: 6px; border-radius: 6px; background: white; }
+        .day-header { background: #fdfdfd; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #eee; }
+        .day-title { font-size: 0.95rem; font-weight: bold; color: #444; }
+        .day-content { padding: 0; display: none; border-top: 1px solid #eee; }
         .day-content.active { display: block; }
+
+        /* テーブルレイアウト */
         .item-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .item-row { border-bottom: 1px solid #eee; }
-        .item-name { width: 35%; padding: 4px 6px; font-size: 0.85rem; color: #444; background: #fafafa; border-right: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-input-cell { width: 65%; padding: 1px 4px; }
-        .item-input { width: 92%; padding: 5px; border: 1px solid #ccc; border-radius: 2px; font-size: 1rem; outline: none; margin: 2px 0; }
-        .card-footer { display: flex; justify-content: flex-end; padding: 3px 6px; background: #fcfcfc; gap: 5px; }
-        .btn-small { font-size: 0.75rem; padding: 3px 8px; color: white; }
-        .btn-del-trigger { background: var(--gray); }
-        .btn-confirm { background: var(--danger); }
-        .btn-cancel { background: var(--gray); }
-        .master-settings { background: #f4f4f4; padding: 8px; border-radius: 3px; margin-top: 15px; border: 1px dashed #ccc; }
-        .master-list-ui { margin: 5px 0; }
-        .master-row { display: flex; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 2px; padding: 2px 6px; border-radius: 2px; justify-content: space-between; }
-        .master-name-text { flex-grow: 1; font-size: 0.85rem; }
-        .order-btns { display: flex; gap: 2px; margin-right: 8px; }
-        .btn-order { background: #eee; color: #333; padding: 2px 6px; font-size: 0.7rem; border: 1px solid #ccc; }
-        .m-confirm-ui { background: #fff1f0; border: 1px solid #ffa39e; padding: 4px; border-radius: 3px; margin: 4px 0; display: flex; align-items: center; justify-content: space-between; }
+        .item-row { border-bottom: 1px solid #f9f9f9; }
+        .item-name { width: 38%; padding: 8px; font-size: 0.85rem; color: #555; background: #fafafa; border-right: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-input-cell { width: 62%; padding: 4px; }
+        .item-input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; outline: none; }
+        .item-input:focus { border-color: var(--main-blue); background: #fffdf0; }
+
+        .card-footer { display: flex; justify-content: flex-end; padding: 6px; background: #fafafa; gap: 8px; }
+        .btn-small { font-size: 0.75rem; padding: 5px 10px; color: white; border-radius: 4px; }
+
+        /* 項目マスター管理エリア */
+        .master-settings { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 25px; border: 1px solid #eee; }
+        .master-list-ui { margin: 8px 0; }
+        .master-row { display: flex; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 4px; padding: 6px; border-radius: 6px; }
+        .master-name-text { flex-grow: 1; font-weight: bold; padding-left: 8px; }
+        .order-btns { display: flex; gap: 4px; }
+        .btn-order { background: #f0f0f0; color: #333; padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; }
+        
+        /* オリジナル追加モーダル */
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal { background: white; width: 85%; max-width: 350px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: pop 0.3s ease-out; }
+        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h3 { margin-top: 0; font-size: 1.1rem; color: var(--main-blue); border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        .modal input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; margin: 15px 0; }
+        .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div id="installBanner">
+        <span style="font-size: 0.85rem;">ホーム画面に追加してアプリ化</span>
+        <button class="install-btn" id="installBtn">追加する</button>
+    </div>
+
     <button class="add-btn" onclick="addNewDay()">＋ 上部に新規メモを追加</button>
+    
     <div id="memoList"></div>
+
     <div class="master-settings">
-        <div style="font-weight:bold; font-size:0.8rem;">項目マスター（並び替え・管理）</div>
+        <div style="font-weight:bold; font-size:0.85rem; color:#666;">項目マスター設定</div>
         <div id="masterItemList" class="master-list-ui"></div>
         <div id="masterConfirmArea"></div>
-        <button onclick="addMasterItem()" style="background:var(--success); color:white; width:100%; padding:8px; margin-top:5px; font-size:0.85rem;">＋ 新しい項目を追加</button>
+        <button onclick="openModal()" style="background:var(--success); color:white; width:100%; padding:10px; margin-top:5px; font-size:0.9rem;">＋ 項目を新規登録</button>
+    </div>
+</div>
+
+<div id="modalOverlay">
+    <div class="modal">
+        <h3>新しい項目を追加</h3>
+        <p style="font-size:0.8rem; color:#888;">（例：ロス数、清掃確認 など）</p>
+        <input type="text" id="newMasterItemName" placeholder="項目名を入力...">
+        <div class="modal-btns">
+            <button class="btn-small" style="background:var(--gray);" onclick="closeModal()">キャンセル</button>
+            <button class="btn-small" style="background:var(--main-blue);" onclick="executeAddMaster()">追加する</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // PWAサービスワーカーの登録
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').then(() => {
-            console.log('Service Worker Registered');
-        });
-    }
+    /* --- PWA インストール制御 --- */
+    let deferredPrompt;
+    const installBanner = document.getElementById('installBanner');
+    const installBtn = document.getElementById('installBtn');
 
-    /* --- ロジック部分は前回と全く同じ（localStorageのキーはv7を維持） --- */
-    let store = JSON.parse(localStorage.getItem('daily_memo_v7')) || {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // PWAとして実行中（Standalone）でない場合のみ表示
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            installBanner.style.display = 'flex';
+        }
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') installBanner.style.display = 'none';
+        deferredPrompt = null;
+    });
+
+    /* --- メインロジック --- */
+    let store = JSON.parse(localStorage.getItem('daily_memo_v8')) || {
         master_items: ["生産数", "ロス数", "清掃点検"],
         logs: []
     };
 
     function save() {
-        localStorage.setItem('daily_memo_v7', JSON.stringify(store));
+        localStorage.setItem('daily_memo_v8', JSON.stringify(store));
         render();
     }
 
@@ -94,10 +144,30 @@
         const log = store.logs.find(l => l.id === dayId);
         if (log) {
             log.items[itemIdx].value = val;
-            localStorage.setItem('daily_memo_v7', JSON.stringify(store));
+            localStorage.setItem('daily_memo_v8', JSON.stringify(store));
         }
     }
 
+    /* --- モーダル制御 --- */
+    function openModal() {
+        document.getElementById('modalOverlay').style.display = 'flex';
+        document.getElementById('newMasterItemName').focus();
+    }
+    function closeModal() {
+        document.getElementById('modalOverlay').style.display = 'none';
+        document.getElementById('newMasterItemName').value = '';
+    }
+    function executeAddMaster() {
+        const nameInput = document.getElementById('newMasterItemName');
+        const name = nameInput.value.trim();
+        if (name) {
+            store.master_items.push(name);
+            save();
+            closeModal();
+        }
+    }
+
+    /* --- 各種削除・並び替え機能はそのまま維持 --- */
     function showDelConfirm(dayId) {
         document.getElementById(`btn-del-pre-${dayId}`).style.display = 'none';
         document.getElementById(`confirm-ui-${dayId}`).style.display = 'flex';
@@ -110,7 +180,6 @@
         store.logs = store.logs.filter(l => l.id !== dayId);
         save();
     }
-
     function moveItem(idx, direction) {
         const newIdx = idx + direction;
         if (newIdx < 0 || newIdx >= store.master_items.length) return;
@@ -119,35 +188,21 @@
         store.master_items[newIdx] = temp;
         save();
     }
-
-    function addMasterItem() {
-        const name = window.prompt("項目名を入力:");
-        if (name && name.trim() !== "") {
-            store.master_items.push(name.trim());
-            save();
-        }
-    }
-
     function showMasterDelConfirm(idx) {
         const name = store.master_items[idx];
         document.getElementById('masterConfirmArea').innerHTML = `
-            <div class="m-confirm-ui">
-                <span>「${name}」を削除しますか？</span>
+            <div style="background:#fff1f0; border:1px solid #ffa39e; padding:6px; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem;">「${name}」を削除？</span>
                 <div>
-                    <button class="btn-small btn-confirm" onclick="executeMasterDelete(${idx})">削除</button>
-                    <button class="btn-small btn-cancel" onclick="clearMasterConfirm()">中止</button>
+                    <button class="btn-small" style="background:var(--danger);" onclick="executeMasterDelete(${idx})">はい</button>
+                    <button class="btn-small" style="background:var(--gray);" onclick="document.getElementById('masterConfirmArea').innerHTML=''">×</button>
                 </div>
             </div>
         `;
     }
-
-    function clearMasterConfirm() {
-        document.getElementById('masterConfirmArea').innerHTML = '';
-    }
-
     function executeMasterDelete(idx) {
         store.master_items.splice(idx, 1);
-        clearMasterConfirm();
+        document.getElementById('masterConfirmArea').innerHTML = '';
         save();
     }
 
@@ -160,7 +215,7 @@
                     <button class="btn-order" onclick="moveItem(${i}, 1)" ${i === store.master_items.length - 1 ? 'disabled style="opacity:0.3"' : ''}>↓</button>
                 </div>
                 <div class="master-name-text">${it}</div>
-                <span style="color:var(--danger); cursor:pointer; font-weight:bold; padding:2px 8px;" onclick="showMasterDelConfirm(${i})">×</span>
+                <span style="color:var(--danger); cursor:pointer; font-weight:bold; padding:4px 10px;" onclick="showMasterDelConfirm(${i})">×</span>
             </div>
         `).join('');
 
@@ -170,29 +225,26 @@
             const card = document.createElement('div');
             card.className = 'day-card';
             const isOpen = idx === 0;
-
             let rows = log.items.map((item, i) => `
                 <tr class="item-row">
                     <td class="item-name">${item.name}</td>
-                    <td class="item-input-cell">
-                        <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)">
-                    </td>
+                    <td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)"></td>
                 </tr>
             `).join('');
 
             card.innerHTML = `
                 <div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')">
                     <span class="day-title">${log.date} の記録</span>
-                    <span style="font-size:0.7rem; color:#999;">${isOpen ? '▲' : '▼'}</span>
+                    <span style="font-size:0.75rem; color:#999;">${isOpen ? '▲' : '▼'}</span>
                 </div>
                 <div class="day-content ${isOpen ? 'active' : ''}">
                     <table class="item-table">${rows}</table>
                     <div class="card-footer">
-                        <button id="btn-del-pre-${log.id}" class="btn-small btn-del-trigger" onclick="showDelConfirm(${log.id})">削除</button>
+                        <button id="btn-del-pre-${log.id}" class="btn-small" style="background:var(--gray);" onclick="showDelConfirm(${log.id})">削除</button>
                         <div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;">
-                            <span style="font-size:0.7rem; color:red;">削除？</span>
-                            <button class="btn-small btn-confirm" onclick="deleteDay(${log.id})">はい</button>
-                            <button class="btn-small btn-cancel" onclick="hideDelConfirm(${log.id})">やめる</button>
+                            <span style="font-size:0.75rem; color:red;">削除？</span>
+                            <button class="btn-small" style="background:var(--danger);" onclick="deleteDay(${log.id})">はい</button>
+                            <button class="btn-small" style="background:var(--gray);" onclick="hideDelConfirm(${log.id})">中止</button>
                         </div>
                     </div>
                 </div>
@@ -201,6 +253,9 @@
         });
     }
 
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+    }
     render();
 </script>
 </body>
