@@ -3,164 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Daily Memo POP</title>
+    <title>Daily Item Memo Pro</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        :root { 
-            --main-blue: #00a8ff; 
-            --accent-orange: #ff9f43; 
-            --success-green: #2ecc71; 
-            --danger-red: #ff4757;
-            --bg-light: #f1f2f6;
-        }
-        body { 
-            font-family: 'Helvetica Neue', Arial, sans-serif; 
-            background-color: var(--bg-light); 
-            margin: 0; 
-            padding: env(safe-area-inset-top) 8px 20px; 
-            font-size: 14px; 
-            color: #2f3542;
-        }
-        .container { 
-            max-width: 480px; 
-            margin: 0 auto; 
-            background: #ffffff; 
-            min-height: 100vh; 
-            padding: 10px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            border-radius: 15px;
-            position: relative; 
-            padding-bottom: 60px; 
-        }
+        :root { --main-blue: #0056b3; --danger: #e74c3c; --success: #27ae60; --gray: #95a5a6; }
+        body { font-family: sans-serif; background-color: #f0f0f0; margin: 0; padding: env(safe-area-inset-top) 5px 20px; font-size: 14px; }
+        .container { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; padding-bottom: 60px; }
         
-        button { cursor: pointer; border: none; border-radius: 10px; font-weight: 900; transition: 0.2s; }
+        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
         
-        #installBanner { 
-            display: none; background: #2f3542; color: white; padding: 10px; 
-            margin-bottom: 10px; border-radius: 12px; justify-content: space-between; 
-            align-items: center; border-left: 5px solid var(--main-blue);
-        }
-        .install-btn { background: var(--main-blue); color: white; padding: 6px 15px; font-size: 0.8rem; }
+        #installBanner { display: none; background: #333; color: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; justify-content: space-between; align-items: center; }
+        .install-btn { background: var(--success); color: white; padding: 5px 12px; font-size: 0.8rem; }
 
-        .add-btn { 
-            background: linear-gradient(135deg, var(--main-blue), #0097e6); 
-            color: white; width: 100%; padding: 12px; font-size: 1.1rem; 
-            margin-bottom: 12px; box-shadow: 0 4px 0 #0086cc; 
-            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
-        }
-        .add-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #0086cc; }
+        .add-btn { background-color: var(--main-blue); color: white; width: 100%; padding: 10px; font-size: 0.95rem; margin-bottom: 10px; box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
+        .add-btn:active { transform: scale(0.98); }
 
-        /* メモカード (POPスタイル) */
-        .day-card { 
-            border: 2px solid #e1e8ed; margin-bottom: 6px; border-radius: 12px; 
-            background: white; overflow: hidden; box-shadow: 0 3px 6px rgba(0,0,0,0.05); 
-        }
-        .day-header { 
-            background: #f8f9fa; padding: 6px 12px; display: flex; 
-            justify-content: space-between; align-items: center; cursor: pointer; 
-        }
-        .day-title { font-size: 1rem; font-weight: 900; color: var(--main-blue); }
-        .day-content { padding: 0; display: none; border-top: 2px solid #f1f2f6; }
+        /* メモカード（間延び解消） */
+        .day-card { border: 1px solid #ddd; margin-bottom: 4px; border-radius: 6px; background: white; overflow: hidden; }
+        .day-header { background: #fdfdfd; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #eee; }
+        .day-title { font-size: 0.9rem; font-weight: bold; color: #444; }
+        .day-content { padding: 0; display: none; border-top: 1px solid #eee; }
         .day-content.active { display: block; }
 
-        /* テーブル (超スリム & 見やすい) */
+        /* テーブルレイアウト（スリム化） */
         .item-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .item-row { border-bottom: 1px solid #f1f2f6; }
-        .item-name { 
-            width: 40%; padding: 6px 10px; font-size: 0.85rem; font-weight: bold; 
-            color: #57606f; background: #f9f9f9; border-right: 1px solid #f1f2f6;
-        }
-        .item-input-cell { width: 60%; padding: 3px 6px; }
-        .item-input { 
-            width: 100%; padding: 8px; border: 2px solid #ced4da; border-radius: 8px; 
-            font-size: 1.1rem; font-weight: bold; outline: none; box-sizing: border-box; 
-            transition: 0.3s; color: #2f3542;
-        }
-        .item-input:focus { border-color: var(--accent-orange); background: #fffaf0; }
+        .item-row { border-bottom: 1px solid #f2f2f2; }
+        .item-name { width: 38%; padding: 5px 8px; font-size: 0.8rem; color: #555; background: #fafafa; border-right: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-input-cell { width: 62%; padding: 2px 4px; }
+        .item-input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; outline: none; box-sizing: border-box; }
+        .item-input:focus { border-color: var(--main-blue); background: #fffdf0; }
 
-        .card-footer { display: flex; justify-content: flex-end; padding: 5px 10px; background: #fff; gap: 8px; }
-        .btn-small { font-size: 0.75rem; padding: 4px 10px; color: white; border-radius: 6px; }
+        .card-footer { display: flex; justify-content: flex-end; padding: 4px 8px; background: #fafafa; gap: 8px; }
+        .btn-small { font-size: 0.7rem; padding: 3px 8px; color: white; border-radius: 4px; }
 
-        /* マスター設定 (アコーディオン) */
-        .master-settings { border: 2px dashed var(--main-blue); border-radius: 12px; margin-top: 20px; overflow: hidden; }
-        .master-header { 
-            background: #eef9ff; padding: 10px 12px; display: flex; 
-            justify-content: space-between; align-items: center; cursor: pointer; 
-            font-weight: 900; color: var(--main-blue); font-size: 0.9rem; 
-        }
-        .master-content { display: none; padding: 10px; background: #fff; }
+        /* 項目マスター管理エリア（アコーディオン） */
+        .master-settings { border: 1px solid #ddd; border-radius: 8px; margin-top: 20px; overflow: hidden; }
+        .master-header { background: #eee; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; color: #666; font-size: 0.8rem; }
+        .master-content { display: none; padding: 8px; background: #f8f9fa; }
         .master-content.active { display: block; }
         
-        .master-row { 
-            display: flex; align-items: center; background: #f1f2f6; 
-            border-radius: 8px; margin-bottom: 4px; padding: 5px; 
-        }
-        .master-name-text { flex-grow: 1; font-weight: bold; padding-left: 8px; color: #2f3542; }
-        .btn-order { background: white; color: var(--main-blue); padding: 4px 8px; font-size: 0.8rem; border: 1px solid var(--main-blue); }
+        .master-row { display: flex; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 3px; padding: 4px; border-radius: 5px; }
+        .master-name-text { flex-grow: 1; font-weight: bold; padding-left: 6px; font-size: 0.85rem; }
+        .order-btns { display: flex; gap: 3px; }
+        .btn-order { background: #f0f0f0; color: #333; padding: 3px 6px; font-size: 0.75rem; border-radius: 4px; }
         
-        .app-footer { 
-            margin-top: 30px; text-align: center; color: #a4b0be; 
-            font-size: 0.75rem; font-weight: bold; padding: 10px;
-        }
+        .app-footer { margin-top: 20px; text-align: center; color: #bbb; font-size: 0.65rem; line-height: 1.4; }
 
-        /* モーダル */
-        #modalOverlay { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(47, 53, 66, 0.8); z-index: 100; justify-content: center; 
-            align-items: flex-start; padding-top: 50px; 
-        }
-        .modal { 
-            background: white; width: 90%; max-width: 350px; padding: 20px; 
-            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            animation: bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        @keyframes bounceIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal input { 
-            width: 100%; padding: 12px; border: 3px solid var(--main-blue); 
-            border-radius: 12px; font-size: 1.2rem; box-sizing: border-box; 
-            margin: 15px 0; outline: none; 
-        }
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 50px; }
+        .modal { background: white; width: 90%; max-width: 350px; padding: 15px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: slideDown 0.2s ease-out; }
+        @keyframes slideDown { from { transform: translateY(-15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; box-sizing: border-box; margin: 10px 0; outline: none; }
+        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="installBanner">
-        <span>✨ ホーム画面に追加して便利に！</span>
-        <button class="install-btn" id="installBtn">追加</button>
+        <span style="font-size: 0.8rem;">ホーム画面に追加してアプリ化</span>
+        <button class="install-btn" id="installBtn">追加する</button>
     </div>
 
-    <button class="add-btn" onclick="addNewDay()">🚀 新規メモを爆速追加</button>
+    <button class="add-btn" onclick="addNewDay()">＋ 上部に新規メモを追加</button>
     
     <div id="memoList"></div>
 
     <div class="master-settings">
         <div class="master-header" onclick="toggleMaster()">
-            <span>🛠 項目マスター設定 (カスタマイズ)</span>
+            <span>⚙️ 項目マスター設定 (開閉)</span>
             <span id="masterArrow">▼</span>
         </div>
         <div id="masterContent" class="master-content">
-            <div id="masterItemList" style="margin-bottom:10px;"></div>
+            <div id="masterItemList" style="margin-bottom:8px;"></div>
             <div id="masterConfirmArea"></div>
-            <button onclick="openModal()" style="background:var(--success-green); color:white; width:100%; padding:10px; font-size:0.9rem; box-shadow: 0 3px 0 #27ae60;">＋ 新しい項目を増やす</button>
+            <button onclick="openModal()" style="background:var(--success); color:white; width:100%; padding:8px; font-size:0.85rem;">＋ 項目を新規登録</button>
         </div>
     </div>
 
     <div class="app-footer">
-        <div>🎨 制作者：1F加工西</div>
-        <div>Version 2.0 (Bright POP)</div>
+        <div>制作者：1F加工西</div>
+        <div>Version 1.9</div>
     </div>
 </div>
 
 <div id="modalOverlay">
     <div class="modal">
-        <h3 style="margin:0; color:var(--main-blue); text-align:center;">新しい項目を追加！</h3>
+        <h3 style="margin:0; font-size:1rem;">新しい項目を追加</h3>
         <input type="text" id="newMasterItemName" placeholder="項目名を入力...">
-        <div style="display:flex; justify-content:center; gap:15px;">
-            <button class="btn-small" style="background:var(--gray); padding:8px 20px;" onclick="closeModal()">やめる</button>
-            <button class="btn-small" style="background:var(--main-blue); padding:8px 25px; font-size:0.9rem;" onclick="executeAddMaster()">追加！</button>
+        <div class="modal-btns">
+            <button class="btn-small" style="background:var(--gray);" onclick="closeModal()">キャンセル</button>
+            <button class="btn-small" style="background:var(--main-blue);" onclick="executeAddMaster()">追加</button>
         </div>
     </div>
 </div>
@@ -180,6 +114,7 @@
         deferredPrompt = null;
     });
 
+    /* --- メインロジック --- */
     let store = JSON.parse(localStorage.getItem('daily_memo_v8')) || {
         master_items: ["生産数", "ロス数", "清掃点検"],
         logs: []
@@ -242,11 +177,11 @@
     function showMasterDelConfirm(idx) {
         const name = store.master_items[idx];
         document.getElementById('masterConfirmArea').innerHTML = `
-            <div style="background:#fff1f0; border:2px solid #ffa39e; padding:8px; border-radius:12px; margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:bold; color:var(--danger-red);">「${name}」消す？</span>
+            <div style="background:#fff1f0; border:1px solid #ffa39e; padding:5px; border-radius:6px; margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.75rem;">「${name}」削除？</span>
                 <div>
-                    <button class="btn-small" style="background:var(--danger-red); box-shadow: 0 2px 0 #c0392b;" onclick="executeMasterDelete(${idx})">消す</button>
-                    <button class="btn-small" style="background:#ccc;" onclick="document.getElementById('masterConfirmArea').innerHTML=''">中止</button>
+                    <button class="btn-small" style="background:var(--danger);" onclick="executeMasterDelete(${idx})">はい</button>
+                    <button class="btn-small" style="background:var(--gray);" onclick="document.getElementById('masterConfirmArea').innerHTML=''">×</button>
                 </div>
             </div>
         `;
@@ -258,11 +193,11 @@
         mList.innerHTML = store.master_items.map((it, i) => `
             <div class="master-row">
                 <div class="order-btns">
-                    <button class="btn-order" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.1"' : ''}>↑</button>
-                    <button class="btn-order" onclick="moveItem(${i}, 1)" ${i === store.master_items.length - 1 ? 'disabled style="opacity:0.1"' : ''}>↓</button>
+                    <button class="btn-order" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.2"' : ''}>↑</button>
+                    <button class="btn-order" onclick="moveItem(${i}, 1)" ${i === store.master_items.length - 1 ? 'disabled style="opacity:0.2"' : ''}>↓</button>
                 </div>
                 <div class="master-name-text">${it}</div>
-                <span style="color:var(--danger-red); cursor:pointer; font-weight:900; padding:4px 12px; font-size:1.2rem;" onclick="showMasterDelConfirm(${i})">×</span>
+                <span style="color:var(--danger); cursor:pointer; font-weight:bold; padding:4px 8px;" onclick="showMasterDelConfirm(${i})">×</span>
             </div>
         `).join('');
 
@@ -283,17 +218,17 @@
 
             card.innerHTML = `
                 <div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')">
-                    <span class="day-title">📅 ${log.date} のログ</span>
-                    <span style="font-size:0.8rem; color:#ced4da;">${isOpen ? '▲' : '▼'}</span>
+                    <span class="day-title">${log.date} の記録</span>
+                    <span style="font-size:0.75rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span>
                 </div>
                 <div class="day-content ${isOpen ? 'active' : ''}">
                     <table class="item-table">${rows}</table>
                     <div class="card-footer">
-                        <button id="btn-del-pre-${log.id}" class="btn-small" style="background:#f1f2f6; color:#a4b0be;" onclick="showDelConfirm(${log.id})">削除</button>
+                        <button id="btn-del-pre-${log.id}" class="btn-small" style="background:#eee; color:#999;" onclick="showDelConfirm(${log.id})">削除</button>
                         <div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;">
-                            <span style="font-size:0.75rem; color:var(--danger-red); font-weight:bold;">消す？</span>
-                            <button class="btn-small" style="background:var(--danger-red);" onclick="deleteDay(${log.id})">OK</button>
-                            <button class="btn-small" style="background:#ccc;" onclick="hideDelConfirm(${log.id})">戻る</button>
+                            <span style="font-size:0.7rem; color:red;">削除？</span>
+                            <button class="btn-small" style="background:var(--danger);" onclick="deleteDay(${log.id})">はい</button>
+                            <button class="btn-small" style="background:var(--gray);" onclick="hideDelConfirm(${log.id})">中止</button>
                         </div>
                     </div>
                 </div>
