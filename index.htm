@@ -1,0 +1,207 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Memo PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <style>
+        /* レイアウトは前回と同じ（省略せずに全て含めてください） */
+        :root { --main-blue: #0056b3; --danger: #e74c3c; --success: #27ae60; --gray: #95a5a6; }
+        body { font-family: sans-serif; background-color: #f0f0f0; margin: 0; padding: 5px; font-size: 14px; }
+        .container { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        button { cursor: pointer; border: none; border-radius: 3px; font-weight: bold; }
+        .add-btn { background-color: var(--main-blue); color: white; width: 100%; padding: 10px; font-size: 1rem; margin-bottom: 8px; }
+        .day-card { border: 1px solid #ddd; margin-bottom: 4px; border-radius: 3px; }
+        .day-header { background: #f8f9fa; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #eee; }
+        .day-title { font-size: 0.9rem; color: #333; }
+        .day-content { padding: 0; display: none; }
+        .day-content.active { display: block; }
+        .item-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .item-row { border-bottom: 1px solid #eee; }
+        .item-name { width: 35%; padding: 4px 6px; font-size: 0.85rem; color: #444; background: #fafafa; border-right: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-input-cell { width: 65%; padding: 1px 4px; }
+        .item-input { width: 92%; padding: 5px; border: 1px solid #ccc; border-radius: 2px; font-size: 1rem; outline: none; margin: 2px 0; }
+        .card-footer { display: flex; justify-content: flex-end; padding: 3px 6px; background: #fcfcfc; gap: 5px; }
+        .btn-small { font-size: 0.75rem; padding: 3px 8px; color: white; }
+        .btn-del-trigger { background: var(--gray); }
+        .btn-confirm { background: var(--danger); }
+        .btn-cancel { background: var(--gray); }
+        .master-settings { background: #f4f4f4; padding: 8px; border-radius: 3px; margin-top: 15px; border: 1px dashed #ccc; }
+        .master-list-ui { margin: 5px 0; }
+        .master-row { display: flex; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 2px; padding: 2px 6px; border-radius: 2px; justify-content: space-between; }
+        .master-name-text { flex-grow: 1; font-size: 0.85rem; }
+        .order-btns { display: flex; gap: 2px; margin-right: 8px; }
+        .btn-order { background: #eee; color: #333; padding: 2px 6px; font-size: 0.7rem; border: 1px solid #ccc; }
+        .m-confirm-ui { background: #fff1f0; border: 1px solid #ffa39e; padding: 4px; border-radius: 3px; margin: 4px 0; display: flex; align-items: center; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="add-btn" onclick="addNewDay()">＋ 上部に新規メモを追加</button>
+    <div id="memoList"></div>
+    <div class="master-settings">
+        <div style="font-weight:bold; font-size:0.8rem;">項目マスター（並び替え・管理）</div>
+        <div id="masterItemList" class="master-list-ui"></div>
+        <div id="masterConfirmArea"></div>
+        <button onclick="addMasterItem()" style="background:var(--success); color:white; width:100%; padding:8px; margin-top:5px; font-size:0.85rem;">＋ 新しい項目を追加</button>
+    </div>
+</div>
+
+<script>
+    // PWAサービスワーカーの登録
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(() => {
+            console.log('Service Worker Registered');
+        });
+    }
+
+    /* --- ロジック部分は前回と全く同じ（localStorageのキーはv7を維持） --- */
+    let store = JSON.parse(localStorage.getItem('daily_memo_v7')) || {
+        master_items: ["生産数", "ロス数", "清掃点検"],
+        logs: []
+    };
+
+    function save() {
+        localStorage.setItem('daily_memo_v7', JSON.stringify(store));
+        render();
+    }
+
+    function getTargetDate() {
+        const now = new Date();
+        if (now.getHours() >= 18) now.setDate(now.getDate() + 1);
+        return `${now.getMonth() + 1}/${now.getDate()}`;
+    }
+
+    function addNewDay() {
+        const dateStr = getTargetDate();
+        const newEntry = {
+            id: Date.now(),
+            date: dateStr,
+            items: store.master_items.map(name => ({ name: name, value: "" }))
+        };
+        store.logs.unshift(newEntry);
+        if (store.logs.length > 30) store.logs.pop();
+        save();
+    }
+
+    function updateVal(dayId, itemIdx, val) {
+        const log = store.logs.find(l => l.id === dayId);
+        if (log) {
+            log.items[itemIdx].value = val;
+            localStorage.setItem('daily_memo_v7', JSON.stringify(store));
+        }
+    }
+
+    function showDelConfirm(dayId) {
+        document.getElementById(`btn-del-pre-${dayId}`).style.display = 'none';
+        document.getElementById(`confirm-ui-${dayId}`).style.display = 'flex';
+    }
+    function hideDelConfirm(dayId) {
+        document.getElementById(`btn-del-pre-${dayId}`).style.display = 'inline-block';
+        document.getElementById(`confirm-ui-${dayId}`).style.display = 'none';
+    }
+    function deleteDay(dayId) {
+        store.logs = store.logs.filter(l => l.id !== dayId);
+        save();
+    }
+
+    function moveItem(idx, direction) {
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= store.master_items.length) return;
+        const temp = store.master_items[idx];
+        store.master_items[idx] = store.master_items[newIdx];
+        store.master_items[newIdx] = temp;
+        save();
+    }
+
+    function addMasterItem() {
+        const name = window.prompt("項目名を入力:");
+        if (name && name.trim() !== "") {
+            store.master_items.push(name.trim());
+            save();
+        }
+    }
+
+    function showMasterDelConfirm(idx) {
+        const name = store.master_items[idx];
+        document.getElementById('masterConfirmArea').innerHTML = `
+            <div class="m-confirm-ui">
+                <span>「${name}」を削除しますか？</span>
+                <div>
+                    <button class="btn-small btn-confirm" onclick="executeMasterDelete(${idx})">削除</button>
+                    <button class="btn-small btn-cancel" onclick="clearMasterConfirm()">中止</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function clearMasterConfirm() {
+        document.getElementById('masterConfirmArea').innerHTML = '';
+    }
+
+    function executeMasterDelete(idx) {
+        store.master_items.splice(idx, 1);
+        clearMasterConfirm();
+        save();
+    }
+
+    function render() {
+        const mList = document.getElementById('masterItemList');
+        mList.innerHTML = store.master_items.map((it, i) => `
+            <div class="master-row">
+                <div class="order-btns">
+                    <button class="btn-order" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.3"' : ''}>↑</button>
+                    <button class="btn-order" onclick="moveItem(${i}, 1)" ${i === store.master_items.length - 1 ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+                </div>
+                <div class="master-name-text">${it}</div>
+                <span style="color:var(--danger); cursor:pointer; font-weight:bold; padding:2px 8px;" onclick="showMasterDelConfirm(${i})">×</span>
+            </div>
+        `).join('');
+
+        const list = document.getElementById('memoList');
+        list.innerHTML = '';
+        store.logs.forEach((log, idx) => {
+            const card = document.createElement('div');
+            card.className = 'day-card';
+            const isOpen = idx === 0;
+
+            let rows = log.items.map((item, i) => `
+                <tr class="item-row">
+                    <td class="item-name">${item.name}</td>
+                    <td class="item-input-cell">
+                        <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)">
+                    </td>
+                </tr>
+            `).join('');
+
+            card.innerHTML = `
+                <div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                    <span class="day-title">${log.date} の記録</span>
+                    <span style="font-size:0.7rem; color:#999;">${isOpen ? '▲' : '▼'}</span>
+                </div>
+                <div class="day-content ${isOpen ? 'active' : ''}">
+                    <table class="item-table">${rows}</table>
+                    <div class="card-footer">
+                        <button id="btn-del-pre-${log.id}" class="btn-small btn-del-trigger" onclick="showDelConfirm(${log.id})">削除</button>
+                        <div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;">
+                            <span style="font-size:0.7rem; color:red;">削除？</span>
+                            <button class="btn-small btn-confirm" onclick="deleteDay(${log.id})">はい</button>
+                            <button class="btn-small btn-cancel" onclick="hideDelConfirm(${log.id})">やめる</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    render();
+</script>
+</body>
+</html>

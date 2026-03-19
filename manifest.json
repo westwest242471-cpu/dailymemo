@@ -1,0 +1,21 @@
+{
+  "name": "Daily Item Memo",
+  "short_name": "デイリーメモ",
+  "description": "日々の項目管理メモ帳",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0056b3",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
