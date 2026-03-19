@@ -45,7 +45,6 @@
         .item-row { border-bottom: 1px solid #f9f9f9; }
         .item-name { width: 40%; padding: 6px 10px; font-size: 0.85rem; color: #666; background: #fafafa; }
         .item-input-cell { width: 60%; padding: 4px 8px; }
-        /* 入力欄：数字優先かつ文字も打てる設定に */
         .item-input { width: 100%; padding: 8px; border: 1.5px solid #eee; border-radius: 8px; font-size: 1.1rem; outline: none; box-sizing: border-box; background: #fff; color: #000; -webkit-appearance: none; }
         .item-input:focus { border-color: var(--main-blue); background: #fdfdf0; }
 
@@ -91,7 +90,7 @@
 
     <div class="app-footer">
         <div>制作者：1F加工西</div>
-        <div>Version 1.3</div>
+        <div>Version 1.4</div>
     </div>
 </div>
 
@@ -139,8 +138,8 @@
             const card = document.createElement('div');
             card.className = 'day-card';
             const isOpen = idx === 0;
-            // ★ pattern="\d*" と inputmode="numeric" の合わせ技で数字を強制しつつ文字も許可
-            let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" inputmode="numeric" pattern="\\d*"></td></tr>`).join('');
+            // Android向け：decimalを指定することで数字テンキーを出しつつ、文字への切替ボタンを確保
+            let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" inputmode="decimal"></td></tr>`).join('');
             card.innerHTML = `<div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')"><span class="day-title">${log.date} の記録</span><span style="font-size:0.8rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span></div><div class="day-content ${isOpen ? 'active' : ''}"><table class="item-table">${rows}</table><div class="card-footer"><button id="btn-del-pre-${log.id}" class="btn-small" style="background:#ddd; color:#888;" onclick="showDelConfirm(${log.id})">削除</button><div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;"><span style="font-size:0.7rem; color:red;">OK?</span><button class="btn-small" style="background:var(--accent-orange);" onclick="deleteDay(${log.id})">はい</button><button class="btn-small" style="background:#ccc;" onclick="hideDelConfirm(${log.id})">中止</button></div></div></div>`;
             list.appendChild(card);
         });
