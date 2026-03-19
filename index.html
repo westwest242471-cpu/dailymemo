@@ -179,24 +179,37 @@
         }
     }
 
-    /* --- モーダル制御 --- */
-    function openModal() {
-        document.getElementById('modalOverlay').style.display = 'flex';
-        document.getElementById('newMasterItemName').focus();
-    }
-    function closeModal() {
-        document.getElementById('modalOverlay').style.display = 'none';
-        document.getElementById('newMasterItemName').value = '';
-    }
-    function executeAddMaster() {
-        const nameInput = document.getElementById('newMasterItemName');
-        const name = nameInput.value.trim();
-        if (name) {
-            store.master_items.push(name);
-            save();
-            closeModal();
+/* --- モーダル制御 --- */
+function openModal() {
+    document.getElementById('modalOverlay').style.display = 'flex';
+    const input = document.getElementById('newMasterItemName');
+    input.focus();
+    
+    // Enterキーの監視を追加
+    input.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // フォーム送信を防ぐ
+            executeAddMaster();
         }
+    };
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').style.display = 'none';
+    const input = document.getElementById('newMasterItemName');
+    input.value = '';
+    input.onkeydown = null; // イベントを解除
+}
+
+function executeAddMaster() {
+    const nameInput = document.getElementById('newMasterItemName');
+    const name = nameInput.value.trim();
+    if (name) {
+        store.master_items.push(name);
+        save();
+        closeModal();
     }
+}
 
     /* --- 各種削除・並び替え機能はそのまま維持 --- */
     function showDelConfirm(dayId) {
