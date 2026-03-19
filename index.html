@@ -30,31 +30,28 @@
         
         button { cursor: pointer; border: none; border-radius: 12px; font-weight: bold; transition: 0.2s; }
 
-        /* インストールバナー（スリム化） */
         #installBanner { display: none; background: #333; color: white; padding: 8px 12px; margin-bottom: 8px; border-radius: 10px; justify-content: space-between; align-items: center; font-size: 0.8rem; }
         .install-btn { background: var(--success-green); color: white; padding: 4px 10px; font-size: 0.75rem; }
 
         .add-btn { background-color: var(--main-blue); color: white; width: 100%; padding: 10px; font-size: 1rem; margin-bottom: 10px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
 
-        /* カードデザイン（余白を詰め） */
         .day-card { border-radius: 12px; background: var(--card-bg); margin-bottom: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e1f0ff; }
         .day-header { background: #fff; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .day-title { font-size: 0.95rem; font-weight: bold; color: var(--main-blue); }
         .day-content { display: none; border-top: 1px solid #f0f0f0; padding-bottom: 4px; }
         .day-content.active { display: block; }
 
-        /* テーブル（行の高さを詰め） */
         .item-table { width: 100%; border-collapse: collapse; }
         .item-row { border-bottom: 1px solid #f9f9f9; }
         .item-name { width: 40%; padding: 6px 10px; font-size: 0.85rem; color: #666; background: #fafafa; }
         .item-input-cell { width: 60%; padding: 4px 8px; }
-        .item-input { width: 100%; padding: 6px 8px; border: 1.5px solid #eee; border-radius: 8px; font-size: 1.1rem; outline: none; box-sizing: border-box; background: #fff; color: #000; }
+        /* 入力欄の微調整 */
+        .item-input { width: 100%; padding: 8px; border: 1.5px solid #eee; border-radius: 8px; font-size: 1.1rem; outline: none; box-sizing: border-box; background: #fff; color: #000; -webkit-appearance: none; }
         .item-input:focus { border-color: var(--main-blue); background: #fdfdf0; }
 
         .card-footer { display: flex; justify-content: flex-end; padding: 6px 10px; background: #fafafa; gap: 8px; }
         .btn-small { font-size: 0.75rem; padding: 4px 12px; color: white; border-radius: 8px; }
 
-        /* マスター設定（アコーディオン化） */
         .master-settings { margin-top: 20px; }
         .master-header { background: #e1f0ff; padding: 8px 12px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #555; font-size: 0.85rem; font-weight: bold; }
         .master-content { display: none; padding: 10px 0; }
@@ -64,7 +61,6 @@
         .master-name-text { flex-grow: 1; font-weight: bold; padding-left: 8px; font-size: 0.85rem; }
         .btn-order { background: #f0f0f0; color: #333; padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; margin: 0 1px; }
 
-        /* モーダル */
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 40px; }
         .modal { background: white; width: 85%; max-width: 320px; padding: 15px; border-radius: 15px; animation: slideDown 0.2s ease-out; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -136,7 +132,8 @@
             const card = document.createElement('div');
             card.className = 'day-card';
             const isOpen = idx === 0;
-            let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="tel" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" inputmode="decimal"></td></tr>`).join('');
+            // ★ type="text" に戻し、inputmode="decimal" で数字キーボードを誘発
+            let rows = log.items.map((item, i) => `<tr class="item-row"><td class="item-name">${item.name}</td><td class="item-input-cell"><input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" inputmode="decimal"></td></tr>`).join('');
             card.innerHTML = `<div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')"><span class="day-title">${log.date} の記録</span><span style="font-size:0.8rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span></div><div class="day-content ${isOpen ? 'active' : ''}"><table class="item-table">${rows}</table><div class="card-footer"><button id="btn-del-pre-${log.id}" class="btn-small" style="background:#ddd; color:#888;" onclick="showDelConfirm(${log.id})">削除</button><div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;"><span style="font-size:0.7rem; color:red;">OK?</span><button class="btn-small" style="background:var(--accent-orange);" onclick="deleteDay(${log.id})">はい</button><button class="btn-small" style="background:#ccc;" onclick="hideDelConfirm(${log.id})">中止</button></div></div></div>`;
             list.appendChild(card);
         });
