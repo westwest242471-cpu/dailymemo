@@ -43,15 +43,10 @@
 
         .item-table { width: 100%; border-collapse: collapse; }
         .item-row { border-bottom: 1px solid #f9f9f9; }
-        .item-name { width: 35%; padding: 6px 10px; font-size: 0.85rem; color: #666; background: #fafafa; }
-        .item-input-cell { width: 65%; padding: 4px 8px; }
-        
-        /* 入力欄と切替ボタンのレイアウト */
-        .input-wrapper { display: flex; align-items: center; gap: 4px; }
-        .item-input { flex-grow: 1; min-width: 0; padding: 8px; border: 1.5px solid #eee; border-radius: 8px; font-size: 1.1rem; outline: none; box-sizing: border-box; background: #fff; color: #000; -webkit-appearance: none; }
+        .item-name { width: 40%; padding: 6px 10px; font-size: 0.85rem; color: #666; background: #fafafa; }
+        .item-input-cell { width: 60%; padding: 4px 8px; }
+        .item-input { width: 100%; padding: 8px; border: 1.5px solid #eee; border-radius: 8px; font-size: 1.1rem; outline: none; box-sizing: border-box; background: #fff; color: #000; -webkit-appearance: none; }
         .item-input:focus { border-color: var(--main-blue); background: #fdfdf0; }
-        /* Gboard撃退用ボタン */
-        .kbd-toggle { background: #eee; color: #555; border: 1px solid #ddd; padding: 8px 6px; border-radius: 8px; font-size: 0.75rem; white-space: nowrap; height: 100%; box-sizing: border-box; }
 
         .card-footer { display: flex; justify-content: flex-end; padding: 6px 10px; background: #fafafa; gap: 8px; }
         .btn-small { font-size: 0.75rem; padding: 4px 12px; color: white; border-radius: 8px; }
@@ -95,14 +90,14 @@
 
     <div class="app-footer">
         <div>制作者：1F加工西</div>
-        <div>Version 1.6</div>
+        <div>Version 1.7</div>
     </div>
 </div>
 
 <div id="modalOverlay">
     <div class="modal">
         <h3>項目を追加</h3>
-        <input type="text" id="newMasterItemName" placeholder="項目名..." inputmode="text">
+        <input type="text" id="newMasterItemName" placeholder="項目名...">
         <div style="display:flex; gap:8px; justify-content:flex-end;">
             <button class="btn-small" style="background:#ccc;" onclick="closeModal()">中止</button>
             <button class="btn-small" style="background:var(--main-blue);" onclick="executeAddMaster()">追加</button>
@@ -135,23 +130,6 @@
     function showMasterDelConfirm(idx) { const name = store.master_items[idx]; document.getElementById('masterConfirmArea').innerHTML = `<div style="background:#fff1f0; border:1px solid #ffa39e; padding:6px; border-radius:8px; margin-top:5px; display:flex; justify-content:space-between; align-items:center; font-size:0.8rem;"><span>「${name}」を削除？</span><div><button class="btn-small" style="background:var(--accent-orange);" onclick="executeMasterDelete(${idx})">削除</button><button class="btn-small" style="background:#ccc;" onclick="document.getElementById('masterConfirmArea').innerHTML=''">中止</button></div></div>`; }
     function executeMasterDelete(idx) { store.master_items.splice(idx, 1); document.getElementById('masterConfirmArea').innerHTML = ''; save(); }
 
-    // Gboard対策：入力モードを強制的に切り替える関数
-    function toggleKbd(inputId, btn) {
-        const input = document.getElementById(inputId);
-        if (input.inputMode === 'numeric' || !input.inputMode) {
-            input.inputMode = 'text'; // 文字モードに切り替え
-            btn.style.background = 'var(--main-blue)';
-            btn.style.color = 'white';
-        } else {
-            input.inputMode = 'numeric'; // 数字モードに戻す
-            btn.style.background = '#eee';
-            btn.style.color = '#555';
-        }
-        // フォーカスし直してキーボードを再表示させる
-        input.blur();
-        setTimeout(() => input.focus(), 10);
-    }
-
     function render() {
         const mList = document.getElementById('masterItemList');
         mList.innerHTML = store.master_items.map((it, i) => `
@@ -169,29 +147,13 @@
             const card = document.createElement('div');
             card.className = 'day-card';
             const isOpen = idx === 0;
-            // メモ入力欄：初期状態は numeric(数字)。横に切替ボタンを配置
+            // 全入力欄を標準のテキスト入力に統一
             let rows = log.items.map((item, i) => `
                 <tr class="item-row">
                     <td class="item-name">${item.name}</td>
                     <td class="item-input-cell">
-                        <div class="input-wrapper">
-                            <input type="text" id="input-${log.id}-${i}" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" inputmode="numeric">
-                            <button class="kbd-toggle" onclick="toggleKbd('input-${log.id}-${i}', this)">あ/1</button>
-                        </div>
+                        <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)">
                     </td>
                 </tr>
             `).join('');
-            card.innerHTML = `<div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')"><span class="day-title">${log.date} の記録</span><span style="font-size:0.8rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span></div><div class="day-content ${isOpen ? 'active' : ''}"><table class="item-table">${rows}</table><div class="card-footer"><button id="btn-del-pre-${log.id}" class="btn-small" style="background:#ddd; color:#888;" onclick="showDelConfirm(${log.id})">削除</button><div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;"><span style="font-size:0.7rem; color:red;">OK?</span><button class="btn-small" style="background:var(--accent-orange);" onclick="deleteDay(${log.id})">はい</button><button class="btn-small" style="background:#ccc;" onclick="hideDelConfirm(${log.id})">中止</button></div></div></div>`;
-            list.appendChild(card);
-        });
-    }
-
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; if (!window.matchMedia('(display-mode: standalone)').matches) document.getElementById('installBanner').style.display = 'flex'; });
-    document.getElementById('installBtn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; document.getElementById('installBanner').style.display = 'none'; } });
-
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
-    render();
-</script>
-</body>
-</html>
+            card.innerHTML = `<div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')"><span class="day-title">${log.date} の記録</span><span style="font-size:0.8rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span></div><div class="day-content ${isOpen ? 'active' : ''}"><table class="item-table">${rows}</table><div class="card-footer"><button id="btn-del-pre-${log.id}" class="btn-small" style="background:#ddd; color:#888;" onclick="showDelConfirm(${log.id})">削除</button><div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;"><span style
