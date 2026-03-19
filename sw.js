@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-memo-v1.1';
+const CACHE_NAME = 'daily-memo-v1.2';
 const urlsToCache = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {
