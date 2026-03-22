@@ -20,14 +20,12 @@
         .add-btn { background-color: var(--main-blue); color: white; width: 100%; padding: 10px; font-size: 0.95rem; margin-bottom: 10px; box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
         .add-btn:active { transform: scale(0.98); }
 
-        /* メモカード（間延び解消） */
         .day-card { border: 1px solid #ddd; margin-bottom: 4px; border-radius: 6px; background: white; overflow: hidden; }
         .day-header { background: #fdfdfd; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #eee; }
         .day-title { font-size: 0.9rem; font-weight: bold; color: #444; }
         .day-content { padding: 0; display: none; border-top: 1px solid #eee; }
         .day-content.active { display: block; }
 
-        /* テーブルレイアウト（スリム化） */
         .item-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .item-row { border-bottom: 1px solid #f2f2f2; }
         .item-name { width: 38%; padding: 5px 8px; font-size: 0.8rem; color: #555; background: #fafafa; border-right: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -38,12 +36,15 @@
         .card-footer { display: flex; justify-content: flex-end; padding: 4px 8px; background: #fafafa; gap: 8px; }
         .btn-small { font-size: 0.7rem; padding: 3px 8px; color: white; border-radius: 4px; }
 
-        /* 項目マスター管理エリア（アコーディオン） */
         .master-settings { border: 1px solid #ddd; border-radius: 8px; margin-top: 20px; overflow: hidden; }
         .master-header { background: #eee; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; color: #666; font-size: 0.8rem; }
         .master-content { display: none; padding: 8px; background: #f8f9fa; }
         .master-content.active { display: block; }
         
+        /* 時間設定のスタイル */
+        .time-setting-box { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+        .time-select { padding: 5px; font-size: 0.9rem; border-radius: 4px; border: 1px solid #ccc; }
+
         .master-row { display: flex; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 3px; padding: 4px; border-radius: 5px; }
         .master-name-text { flex-grow: 1; font-weight: bold; padding-left: 6px; font-size: 0.85rem; }
         .order-btns { display: flex; gap: 3px; }
@@ -72,10 +73,17 @@
 
     <div class="master-settings">
         <div class="master-header" onclick="toggleMaster()">
-            <span>⚙️ 項目マスター設定 (開閉)</span>
+            <span>⚙️ 設定 (項目編集・切替時間)</span>
             <span id="masterArrow">▼</span>
         </div>
         <div id="masterContent" class="master-content">
+            <div class="time-setting-box">
+                <div style="font-size: 0.75rem; color: #666; margin-bottom: 5px;">📅 日付切り替え時間の設定</div>
+                <select id="switchTimeSelect" class="time-select" onchange="updateSwitchTime(this.value)">
+                    </select>
+                <span style="font-size: 0.75rem; color: #888;">時以降は翌日の日付になります</span>
+            </div>
+
             <div id="masterItemList" style="margin-bottom:8px;"></div>
             <div id="masterConfirmArea"></div>
             <button onclick="openModal()" style="background:var(--success); color:white; width:100%; padding:8px; font-size:0.85rem;">＋ 項目を新規登録</button>
@@ -84,7 +92,7 @@
 
     <div class="app-footer">
         <div>制作者：1F加工西</div>
-        <div>Version 1.9</div>
+        <div>Version 2.0</div>
     </div>
 </div>
 
@@ -115,16 +123,29 @@
     });
 
     /* --- メインロジック --- */
+    // 初期データに switch_time (デフォルト18) を追加
     let store = JSON.parse(localStorage.getItem('daily_memo_v8')) || {
         master_items: ["生産数", "ロス数", "清掃点検"],
-        logs: []
+        logs: [],
+        switch_time: 18
     };
 
+    // もし古いデータに switch_time がなければ追加
+    if (store.switch_time === undefined) store.switch_time = 18;
+
     function save() { localStorage.setItem('daily_memo_v8', JSON.stringify(store)); render(); }
+
     function getTargetDate() {
         const now = new Date();
-        if (now.getHours() >= 18) now.setDate(now.getDate() + 1);
+        // 設定された時間(switch_time)と比較して日付を調整
+        if (now.getHours() >= store.switch_time) now.setDate(now.getDate() + 1);
         return `${now.getMonth() + 1}/${now.getDate()}`;
+    }
+
+    function updateSwitchTime(val) {
+        store.switch_time = parseInt(val);
+        localStorage.setItem('daily_memo_v8', JSON.stringify(store));
+        // 保存時に特に再描画は不要だが、内部値を更新
     }
 
     function addNewDay() {
@@ -189,6 +210,17 @@
     function executeMasterDelete(idx) { store.master_items.splice(idx, 1); document.getElementById('masterConfirmArea').innerHTML = ''; save(); }
 
     function render() {
+        // 時間設定のプルダウンを生成
+        const timeSelect = document.getElementById('switchTimeSelect');
+        timeSelect.innerHTML = '';
+        for(let h=0; h<24; h++) {
+            const opt = document.createElement('option');
+            opt.value = h;
+            opt.innerText = h + '時';
+            if(h === store.switch_time) opt.selected = true;
+            timeSelect.appendChild(opt);
+        }
+
         const mList = document.getElementById('masterItemList');
         mList.innerHTML = store.master_items.map((it, i) => `
             <div class="master-row">
