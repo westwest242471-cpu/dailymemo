@@ -100,7 +100,7 @@
 
     <div class="app-footer">
         <div>制作者：1F加工西</div>
-        <div>Version 2.1</div>
+        <div>Version 2.2</div>
     </div>
 </div>
 
@@ -130,15 +130,45 @@
         deferredPrompt = null;
     });
 
-    let store = JSON.parse(localStorage.getItem('daily_memo_v8')) || {
-        master_items: ["生産数", "ロス数", "清掃点検"],
-        logs: [],
-        switch_time: 18
-    };
+    // デフォルトのマスターアイテム
+    const DEFAULT_MASTER_ITEMS = ["からあげ", "赤飯", "手巻きB海苔", "手巻きC海苔", "手巻きD海苔", "エビ平均重量", "こんぶ平均重量", "牛平均重量", "いなり皮ロス", "手巻きB釜数", "手巻きC釜数", "手巻きD釜数"];
 
-    if (store.switch_time === undefined) store.switch_time = 18;
+    let store;
+    try {
+        const stored = localStorage.getItem('daily_memo_v8');
+        store = stored ? JSON.parse(stored) : {
+            master_items: DEFAULT_MASTER_ITEMS,
+            logs: [],
+            switch_time: 18
+        };
+        
+        // データの補正（消失対策・アップグレード）
+        if (!store.master_items || store.master_items.length === 0 || store.master_items.includes("生産数")) {
+            store.master_items = DEFAULT_MASTER_ITEMS;
+        }
+        if (store.logs === undefined) store.logs = [];
+        if (store.switch_time === undefined) store.switch_time = 18;
 
-    function save() { localStorage.setItem('daily_memo_v8', JSON.stringify(store)); render(); }
+    } catch (e) {
+        console.error("Data load error:", e);
+        store = {
+            master_items: DEFAULT_MASTER_ITEMS,
+            logs: [],
+            switch_time: 18
+        };
+    }
+
+    function save() { 
+        try {
+            localStorage.setItem('daily_memo_v8', JSON.stringify(store)); 
+        } catch (e) {
+            console.error("Save error:", e);
+            if (e.name === 'QuotaExceededError') {
+                alert("ブラウザの保存容量がいっぱいです。古いログを削除してください。");
+            }
+        }
+        render(); 
+    }
 
     function getTargetDate() {
         const now = new Date();
@@ -261,304 +291,76 @@
 
     function render() {
         const timeSelect = document.getElementById('switchTimeSelect');
-        timeSelect.innerHTML = '';
-        for(let h=0; h<24; h++) {
-            const opt = document.createElement('option');
-            opt.value = h;
-            opt.innerText = h + '時';
-            if(h === store.switch_time) opt.selected = true;
-            timeSelect.appendChild(opt);
+        if (timeSelect) {
+            timeSelect.innerHTML = '';
+            for(let h=0; h<24; h++) {
+                const opt = document.createElement('option');
+                opt.value = h;
+                opt.innerText = h + '時';
+                if(h === store.switch_time) opt.selected = true;
+                timeSelect.appendChild(opt);
+            }
         }
 
         const mList = document.getElementById('masterItemList');
-        mList.innerHTML = store.master_items.map((it, i) => `
-            <div class="master-row">
-                <div class="order-btns">
-                    <button class="btn-order" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.2"' : ''}>↑</button>
-                    <button class="btn-order" onclick="moveItem(${i}, 1)" ${i === store.master_items.length - 1 ? 'disabled style="opacity:0.2"' : ''}>↓</button>
-                </div>
-                <div class="master-name-text">${it}</div>
-                <span style="color:var(--danger); cursor:pointer; font-weight:bold; padding:4px 8px;" onclick="showMasterDelConfirm(${i})">×</span>
-            </div>
-        `).join('');
-
-        const list = document.getElementById('memoList');
-        list.innerHTML = '';
-        store.logs.forEach((log, idx) => {
-            const card = document.createElement('div');
-            card.className = 'day-card';
-            const isOpen = idx === 0;
-            let rows = log.items.map((item, i) => `
-                <tr class="item-row">
-                    <td class="item-name">${item.name}</td>
-                    <td class="item-input-cell">
-                        <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)">
-                    </td>
-                </tr>
-            `).join('');
-
-            card.innerHTML = `
-                <div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')">
-                    <span class="day-title">${log.date} の記録</span>
-                    <span style="font-size:0.75rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span>
-                </div>
-                <div class="day-content ${isOpen ? 'active' : ''}">
-                    <table class="item-table">${rows}</table>
-                    <div class="card-footer">
-                        <button id="btn-del-pre-${log.id}" class="btn-small" style="background:#eee; color:#999;" onclick="showDelConfirm(${log.id})">削除</button>
-                        <div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;">
-                            <span style="font-size:0.7rem; color:red;">削除？</span>
-                            <button class="btn-small" style="background:var(--danger);" onclick="deleteDay(${log.id})">はい</button>
-                            <button class="btn-small" style="background:var(--gray);" onclick="hideDelConfirm(${log.id})">中止</button>
-                        </div>
+        if (mList) {
+            mList.innerHTML = store.master_items.map((it, i) => `
+                <div class="master-row">
+                    <div class="order-btns">
+                        <button class="btn-order" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.2"' : ''}>↑</button>
+                        <button class="btn-order" onclick="moveItem(${i}, 1)" ${i === store.master_items.length - 1 ? 'disabled style="opacity:0.2"' : ''}>↓</button>
                     </div>
+                    <div class="master-name-text">${it}</div>
+                    <span style="color:var(--danger); cursor:pointer; font-weight:bold; padding:4px 8px;" onclick="showMasterDelConfirm(${i})">×</span>
                 </div>
-            `;
-            list.appendChild(card);
-        });
-    }
-
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(() => {}); }
-    render();
-</script>
-</body>
-</html>
-        .btn-small { font-size: 0.7rem; padding: 3px 8px; color: white; border-radius: 4px; }
-
-        .master-settings { border: 1px solid #ddd; border-radius: 8px; margin-top: 20px; overflow: hidden; }
-        .master-header { background: #eee; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; color: #666; font-size: 0.8rem; }
-        .master-content { display: none; padding: 8px; background: #f8f9fa; }
-        .master-content.active { display: block; }
-        
-        /* 時間設定のスタイル */
-        .time-setting-box { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
-        .time-select { padding: 5px; font-size: 0.9rem; border-radius: 4px; border: 1px solid #ccc; }
-
-        .master-row { display: flex; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 3px; padding: 4px; border-radius: 5px; }
-        .master-name-text { flex-grow: 1; font-weight: bold; padding-left: 6px; font-size: 0.85rem; }
-        .order-btns { display: flex; gap: 3px; }
-        .btn-order { background: #f0f0f0; color: #333; padding: 3px 6px; font-size: 0.75rem; border-radius: 4px; }
-        
-        .app-footer { margin-top: 20px; text-align: center; color: #bbb; font-size: 0.65rem; line-height: 1.4; }
-
-        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 50px; }
-        .modal { background: white; width: 90%; max-width: 350px; padding: 15px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: slideDown 0.2s ease-out; }
-        @keyframes slideDown { from { transform: translateY(-15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; box-sizing: border-box; margin: 10px 0; outline: none; }
-        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div id="installBanner">
-        <span style="font-size: 0.8rem;">ホーム画面に追加してアプリ化</span>
-        <button class="install-btn" id="installBtn">追加する</button>
-    </div>
-
-    <button class="add-btn" onclick="addNewDay()">＋ 上部に新規メモを追加</button>
-    
-    <div id="memoList"></div>
-
-    <div class="master-settings">
-        <div class="master-header" onclick="toggleMaster()">
-            <span>⚙️ 設定 (項目編集・切替時間)</span>
-            <span id="masterArrow">▼</span>
-        </div>
-        <div id="masterContent" class="master-content">
-            <div class="time-setting-box">
-                <div style="font-size: 0.75rem; color: #666; margin-bottom: 5px;">📅 日付切り替え時間の設定</div>
-                <select id="switchTimeSelect" class="time-select" onchange="updateSwitchTime(this.value)">
-                    </select>
-                <span style="font-size: 0.75rem; color: #888;">時以降は翌日の日付になります</span>
-            </div>
-
-            <div id="masterItemList" style="margin-bottom:8px;"></div>
-            <div id="masterConfirmArea"></div>
-            <button onclick="openModal()" style="background:var(--success); color:white; width:100%; padding:8px; font-size:0.85rem;">＋ 項目を新規登録</button>
-        </div>
-    </div>
-
-    <div class="app-footer">
-        <div>制作者：1F加工西</div>
-        <div>Version 2.0</div>
-    </div>
-</div>
-
-<div id="modalOverlay">
-    <div class="modal">
-        <h3 style="margin:0; font-size:1rem;">新しい項目を追加</h3>
-        <input type="text" id="newMasterItemName" placeholder="項目名を入力...">
-        <div class="modal-btns">
-            <button class="btn-small" style="background:var(--gray);" onclick="closeModal()">キャンセル</button>
-            <button class="btn-small" style="background:var(--main-blue);" onclick="executeAddMaster()">追加</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); deferredPrompt = e;
-        if (!window.matchMedia('(display-mode: standalone)').matches) document.getElementById('installBanner').style.display = 'flex';
-    });
-
-    document.getElementById('installBtn').addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') document.getElementById('installBanner').style.display = 'none';
-        deferredPrompt = null;
-    });
-
-    /* --- メインロジック --- */
-    // 初期データに switch_time (デフォルト18) を追加
-    let store = JSON.parse(localStorage.getItem('daily_memo_v8')) || {
-        master_items: ["生産数", "ロス数", "清掃点検"],
-        logs: [],
-        switch_time: 18
-    };
-
-    // もし古いデータに switch_time がなければ追加
-    if (store.switch_time === undefined) store.switch_time = 18;
-
-    function save() { localStorage.setItem('daily_memo_v8', JSON.stringify(store)); render(); }
-
-    function getTargetDate() {
-        const now = new Date();
-        // 設定された時間(switch_time)と比較して日付を調整
-        if (now.getHours() >= store.switch_time) now.setDate(now.getDate() + 1);
-        return `${now.getMonth() + 1}/${now.getDate()}`;
-    }
-
-    function updateSwitchTime(val) {
-        store.switch_time = parseInt(val);
-        localStorage.setItem('daily_memo_v8', JSON.stringify(store));
-        // 保存時に特に再描画は不要だが、内部値を更新
-    }
-
-    function addNewDay() {
-        const dateStr = getTargetDate();
-        const newEntry = { id: Date.now(), date: dateStr, items: store.master_items.map(name => ({ name: name, value: "" })) };
-        store.logs.unshift(newEntry);
-        if (store.logs.length > 30) store.logs.pop();
-        save();
-    }
-
-    function updateVal(dayId, itemIdx, val) {
-        const log = store.logs.find(l => l.id === dayId);
-        if (log) { log.items[itemIdx].value = val; localStorage.setItem('daily_memo_v8', JSON.stringify(store)); }
-    }
-
-    function toggleMaster() {
-        const content = document.getElementById('masterContent');
-        const arrow = document.getElementById('masterArrow');
-        const isActive = content.classList.toggle('active');
-        arrow.innerText = isActive ? '▲' : '▼';
-    }
-
-    function openModal() {
-        document.getElementById('modalOverlay').style.display = 'flex';
-        const input = document.getElementById('newMasterItemName');
-        input.focus();
-        input.onkeydown = (e) => { if (e.key === 'Enter') executeAddMaster(); };
-    }
-
-    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; document.getElementById('newMasterItemName').value = ''; }
-    function executeAddMaster() {
-        const name = document.getElementById('newMasterItemName').value.trim();
-        if (name) { store.master_items.push(name); save(); closeModal(); }
-    }
-
-    function showDelConfirm(dayId) {
-        document.getElementById(`btn-del-pre-${dayId}`).style.display = 'none';
-        document.getElementById(`confirm-ui-${dayId}`).style.display = 'flex';
-    }
-    function hideDelConfirm(dayId) {
-        document.getElementById(`btn-del-pre-${dayId}`).style.display = 'inline-block';
-        document.getElementById(`confirm-ui-${dayId}`).style.display = 'none';
-    }
-    function deleteDay(dayId) { store.logs = store.logs.filter(l => l.id !== dayId); save(); }
-    function moveItem(idx, direction) {
-        const newIdx = idx + direction;
-        if (newIdx < 0 || newIdx >= store.master_items.length) return;
-        const temp = store.master_items[idx]; store.master_items[idx] = store.master_items[newIdx]; store.master_items[newIdx] = temp; save();
-    }
-    function showMasterDelConfirm(idx) {
-        const name = store.master_items[idx];
-        document.getElementById('masterConfirmArea').innerHTML = `
-            <div style="background:#fff1f0; border:1px solid #ffa39e; padding:5px; border-radius:6px; margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.75rem;">「${name}」削除？</span>
-                <div>
-                    <button class="btn-small" style="background:var(--danger);" onclick="executeMasterDelete(${idx})">はい</button>
-                    <button class="btn-small" style="background:var(--gray);" onclick="document.getElementById('masterConfirmArea').innerHTML=''">×</button>
-                </div>
-            </div>
-        `;
-    }
-    function executeMasterDelete(idx) { store.master_items.splice(idx, 1); document.getElementById('masterConfirmArea').innerHTML = ''; save(); }
-
-    function render() {
-        // 時間設定のプルダウンを生成
-        const timeSelect = document.getElementById('switchTimeSelect');
-        timeSelect.innerHTML = '';
-        for(let h=0; h<24; h++) {
-            const opt = document.createElement('option');
-            opt.value = h;
-            opt.innerText = h + '時';
-            if(h === store.switch_time) opt.selected = true;
-            timeSelect.appendChild(opt);
+            `).join('');
         }
 
-        const mList = document.getElementById('masterItemList');
-        mList.innerHTML = store.master_items.map((it, i) => `
-            <div class="master-row">
-                <div class="order-btns">
-                    <button class="btn-order" onclick="moveItem(${i}, -1)" ${i === 0 ? 'disabled style="opacity:0.2"' : ''}>↑</button>
-                    <button class="btn-order" onclick="moveItem(${i}, 1)" ${i === store.master_items.length - 1 ? 'disabled style="opacity:0.2"' : ''}>↓</button>
-                </div>
-                <div class="master-name-text">${it}</div>
-                <span style="color:var(--danger); cursor:pointer; font-weight:bold; padding:4px 8px;" onclick="showMasterDelConfirm(${i})">×</span>
-            </div>
-        `).join('');
-
         const list = document.getElementById('memoList');
-        list.innerHTML = '';
-        store.logs.forEach((log, idx) => {
-            const card = document.createElement('div');
-            card.className = 'day-card';
-            const isOpen = idx === 0;
-            let rows = log.items.map((item, i) => `
-                <tr class="item-row">
-                    <td class="item-name">${item.name}</td>
-                    <td class="item-input-cell">
-                        <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)">
-                    </td>
-                </tr>
-            `).join('');
+        if (list) {
+            list.innerHTML = '';
+            store.logs.forEach((log, idx) => {
+                const card = document.createElement('div');
+                card.className = 'day-card';
+                const isOpen = idx === 0;
+                let rows = log.items.map((item, i) => `
+                    <tr class="item-row">
+                        <td class="item-name">${item.name}</td>
+                        <td class="item-input-cell">
+                            <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)">
+                        </td>
+                    </tr>
+                `).join('');
 
-            card.innerHTML = `
-                <div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')">
-                    <span class="day-title">${log.date} の記録</span>
-                    <span style="font-size:0.75rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span>
-                </div>
-                <div class="day-content ${isOpen ? 'active' : ''}">
-                    <table class="item-table">${rows}</table>
-                    <div class="card-footer">
-                        <button id="btn-del-pre-${log.id}" class="btn-small" style="background:#eee; color:#999;" onclick="showDelConfirm(${log.id})">削除</button>
-                        <div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;">
-                            <span style="font-size:0.7rem; color:red;">削除？</span>
-                            <button class="btn-small" style="background:var(--danger);" onclick="deleteDay(${log.id})">はい</button>
-                            <button class="btn-small" style="background:var(--gray);" onclick="hideDelConfirm(${log.id})">中止</button>
+                card.innerHTML = `
+                    <div class="day-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                        <span class="day-title">${log.date} の記録</span>
+                        <span style="font-size:0.75rem; color:#ccc;">${isOpen ? '▲' : '▼'}</span>
+                    </div>
+                    <div class="day-content ${isOpen ? 'active' : ''}">
+                        <table class="item-table">${rows}</table>
+                        <div class="card-footer">
+                            <button id="btn-del-pre-${log.id}" class="btn-small" style="background:#eee; color:#999;" onclick="showDelConfirm(${log.id})">削除</button>
+                            <div id="confirm-ui-${log.id}" style="display:none; gap:5px; align-items:center;">
+                                <span style="font-size:0.7rem; color:red;">削除？</span>
+                                <button class="btn-small" style="background:var(--danger);" onclick="deleteDay(${log.id})">はい</button>
+                                <button class="btn-small" style="background:var(--gray);" onclick="hideDelConfirm(${log.id})">中止</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            list.appendChild(card);
-        });
+                `;
+                list.appendChild(card);
+            });
+        }
     }
 
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(() => {}); }
+    if ('serviceWorker' in navigator) { 
+        navigator.serviceWorker.register('./sw.js').then(() => {
+            console.log("Service Worker Registered");
+        }).catch((err) => {
+            console.error("SW Registration failed:", err);
+        }); 
+    }
     render();
 </script>
 </body>
