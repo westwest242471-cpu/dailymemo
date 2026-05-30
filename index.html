@@ -100,7 +100,7 @@
 
     <div class="app-footer">
         <div>制作者：1F加工西</div>
-        <div>Version 2.3</div>
+        <div>Version 2.31</div>
     </div>
 </div>
 
@@ -168,6 +168,14 @@
             }
         }
         render(); 
+    }
+
+    function saveQuietly() {
+        try {
+            localStorage.setItem('daily_memo_v8', JSON.stringify(store)); 
+        } catch (e) {
+            console.error("SaveQuietly error:", e);
+        }
     }
 
     function getTargetDate() {
@@ -238,7 +246,7 @@
 
     function updateVal(dayId, itemIdx, val) {
         const log = store.logs.find(l => l.id === dayId);
-        if (log) { log.items[itemIdx].value = val; save(); }
+        if (log) { log.items[itemIdx].value = val; saveQuietly(); }
     }
 
     function focusNext(currentInput) {
@@ -335,7 +343,7 @@
                     <tr class="item-row">
                         <td class="item-name">${item.name}</td>
                         <td class="item-input-cell">
-                            <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); focusNext(this); }">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); focusNext(this); }">
                         </td>
                     </tr>
                 `).join('');
