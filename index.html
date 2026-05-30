@@ -100,7 +100,7 @@
 
     <div class="app-footer">
         <div>制作者：1F加工西</div>
-        <div>Version 2.31</div>
+        <div>Version 2.32</div>
     </div>
 </div>
 
@@ -343,7 +343,7 @@
                     <tr class="item-row">
                         <td class="item-name">${item.name}</td>
                         <td class="item-input-cell">
-                            <input type="text" inputmode="numeric" pattern="[0-9]*" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); focusNext(this); }">
+                            <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); focusNext(this); }">
                         </td>
                     </tr>
                 `).join('');
