@@ -100,7 +100,7 @@
 
     <div class="app-footer">
         <div>制作者：1F加工西</div>
-        <div>Version 2.2</div>
+        <div>Version 2.3</div>
     </div>
 </div>
 
@@ -131,7 +131,7 @@
     });
 
     // デフォルトのマスターアイテム
-    const DEFAULT_MASTER_ITEMS = ["からあげ", "赤飯", "手巻きB海苔", "手巻きC海苔", "手巻きD海苔", "エビ平均重量", "こんぶ平均重量", "牛平均重量", "いなり皮ロス", "手巻きB釜数", "手巻きC釜数", "手巻きD釜数"];
+    const DEFAULT_MASTER_ITEMS = ["赤飯", "いなり皮", "サーモン", "手巻きB海苔", "手巻きD海苔", "こんぶ平均重量", "牛平均重量", "エビ平均重量", "塩むすび平均重量"];
 
     let store;
     try {
@@ -241,6 +241,14 @@
         if (log) { log.items[itemIdx].value = val; save(); }
     }
 
+    function focusNext(currentInput) {
+        const inputs = Array.from(document.querySelectorAll('.item-input'));
+        const idx = inputs.indexOf(currentInput);
+        if (idx !== -1 && idx < inputs.length - 1) {
+            inputs[idx + 1].focus();
+        }
+    }
+
     function toggleMaster() {
         const content = document.getElementById('masterContent');
         const arrow = document.getElementById('masterArrow');
@@ -327,7 +335,7 @@
                     <tr class="item-row">
                         <td class="item-name">${item.name}</td>
                         <td class="item-input-cell">
-                            <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)">
+                            <input type="text" class="item-input" value="${item.value}" onchange="updateVal(${log.id}, ${i}, this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); focusNext(this); }">
                         </td>
                     </tr>
                 `).join('');
